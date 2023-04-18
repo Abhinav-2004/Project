@@ -9,3 +9,6 @@ List of dependencies
 ctrl^c to stop server
 5)yarn add tailwindcss postcss autoprefixer
 6)npx tailwindcss init -p
+7)yarn add express
+8)yarn add cors
+9)yarn add dotenv
