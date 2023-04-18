@@ -3,7 +3,7 @@ List of dependencies
 
 1)npm install --global yarn
 2) yarn create vite client
-3)select framkework - react->javascript
+3)select framework - react->javascript
 4)cd client
   yarn
   yarn dev
