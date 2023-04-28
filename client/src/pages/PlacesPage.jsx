@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useState } from "react";
 import Perks from "../Perks";
+import axios from "axios";
 export default function PlacesPage() {
   const { action } = useParams();
   const [title, setTitle] = useState("");
@@ -19,6 +20,32 @@ export default function PlacesPage() {
   }
   function preInput(header) {
     return <>{inputHeader(header)}</>;
+  }
+  async function addPhotoByLink(ev) {
+    ev.preventDefault();
+    const { data: fileName } = await axios.post("/upload_by_link", {
+      link: photoLink,
+    });
+    setAddedphotos((prev) => {
+      return [...prev, fileName];
+    });
+    setPhotoLink("");
+  }
+  function uploadPhoto(ev){
+    const files = ev.target.files;
+    const data = new FormData();
+    for(let i=0;i<files.length;i++){
+      data.append('photos', files[i]); 
+    }
+    axios.post('/upload', data,{
+      headers:{"Content-Type":"multipart/form-data"}
+    }).then(response=>{
+      const {data:fileNames}=response;
+      setAddedphotos((prev) => {
+        return [...prev, ...fileNames];
+      });
+    })
+
   }
   return (
     <div>
@@ -75,12 +102,26 @@ export default function PlacesPage() {
                 type="text"
                 placeholder={"Add using Link..."}
               />
-              <button className="bg-gray-200 grow px-4 gap-2 rounded-2xl">
+              <button
+                onClick={addPhotoByLink}
+                className="bg-gray-200 grow px-4 gap-2 rounded-2xl"
+              >
                 Add Photo
               </button>
             </div>
-            <div className="mt-2 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              <button className="flex gap-4 justify-center border bg-transparent rounded-2xl p-8 text-2xl text-gray-500">
+
+            <div className="mt-2 gap-2 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              {addedphotos.length > 0 &&
+                addedphotos.map((link) => (
+                  <div className="h-32 flex">
+                    <img
+                      className="rounded-2xl w-full object-cover"
+                      src={"http://localhost:4000/uploads/" + link}
+                    />
+                  </div>
+                ))}
+              <label className="h-32 cursor-pointer flex gap-4 items-center justify-center border bg-transparent rounded-2xl p-2 text-2xl text-gray-500">
+                <input type="file" multiple className="hidden" onChange={uploadPhoto}/>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -96,7 +137,7 @@ export default function PlacesPage() {
                   />
                 </svg>
                 UPLOAD
-              </button>
+              </label>
             </div>
             {preInput("Description")}
             <textarea
@@ -136,7 +177,6 @@ export default function PlacesPage() {
                 <h3 className="mt-2 -mb-2">Max Guests</h3>
                 <input
                   type="number"
-                  
                   value={maxguests}
                   onChange={(ev) => setMaxguests(ev.target.value)}
                 />

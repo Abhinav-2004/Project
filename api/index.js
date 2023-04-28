@@ -1,8 +1,10 @@
-
+const multer = require('multer');
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
 const {mongoose, models } = require('mongoose');
 const User = require('./models/user.js');
+const imageDownloader=require('image-downloader');
 const jwt = require('jsonwebtoken');const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
 const bcryptSalt = bcrypt.genSaltSync(10);
@@ -15,7 +17,7 @@ app.use(cors({
     credentials:true,
     origin:'http://127.0.0.1:5173',
 }));
-
+app.use('/uploads', express.static(__dirname+'/uploads'));
 app.get('/test',(req,res)=>{
     mongoose.connect(process.env.MONGO_URL);
     res.json("Test OK");
@@ -77,6 +79,30 @@ app.get('/profile', (req,res)=>{
 
 app.post('/logout', (req,res)=>{
   res.cookie('token', '').json(true);
+});
+console.log({__dirname});
+app.post('/upload_by_link', async (req,res)=>{
+  const {link}=req.body;
+  const newName='photo'+ Date.now() +'.jpg';
+  await imageDownloader.image({
+    url:link,
+    dest: __dirname + '/uploads/' + newName,
+  })
+  res.json(newName);
+})
+
+const photosMiddleware= multer({dest:'uploads/'});
+app.post('/upload', photosMiddleware.array('photos', 100),(req,res)=>{
+  const uploadedFiles = [];
+  for(let i =0;i<req.files.length;i++){
+    const {path,originalname} = req.files[i];
+    const parts = originalname.split('.');
+    const ext = parts[parts.length-1];
+    const newPath = path+'.'+ext;
+    fs.renameSync(path, newPath);
+    uploadedFiles.push(newPath.replace('uploads\\', ''));
+  }
+  res.json(uploadedFiles);
 });
 
 app.listen(4000);
